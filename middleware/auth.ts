@@ -1,15 +1,23 @@
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore } from '~/stores/auth'
 
 export default defineNuxtRouteMiddleware((to) => {
   const authStore = useAuthStore()
+  const publicRoutes = ['/login', '/callback']
 
-  // Skip middleware for login page
-  if (to.path === '/login') {
+  // Allow access to public routes
+  if (publicRoutes.includes(to.path)) {
     return
   }
 
-  // Redirect to login if not authenticated
+  // Check if user is authenticated
   if (!authStore.isAuthenticated) {
     return navigateTo('/login')
+  }
+
+  // Check if token needs refresh
+  if (authStore.tokenExpired) {
+    authStore.refreshAccessToken().catch(() => {
+      return navigateTo('/login')
+    })
   }
 }) 

@@ -1,123 +1,72 @@
 <template>
-  <div class="space-y-8">
+  <div class="space-y-6">
     <div class="relative">
       <input
-        v-model="searchQuery"
         type="text"
+        v-model="searchQuery"
         placeholder="What do you want to listen to?"
-        class="w-full rounded-full bg-white/10 px-6 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"
-        @input="handleSearch"
+        class="w-full bg-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
       />
       <Icon
-        name="heroicons:magnifying-glass"
-        class="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+        name="mdi:magnify"
+        class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6"
       />
     </div>
 
-    <div v-if="searchResults.length > 0" class="space-y-8">
-      <!-- Tracks -->
-      <section v-if="searchResults.tracks?.items.length">
-        <h2 class="mb-4 text-2xl font-bold">Songs</h2>
-        <div class="space-y-2">
-          <div
-            v-for="track in searchResults.tracks.items"
-            :key="track.id"
-            class="flex items-center space-x-4 rounded-md p-2 hover:bg-white/10"
-            @click="playTrack(track)"
-          >
-            <img :src="track.album.images[0].url" :alt="track.name" class="h-12 w-12 rounded" />
-            <div class="flex-1">
-              <h3 class="font-medium">{{ track.name }}</h3>
-              <p class="text-sm text-gray-400">
-                {{ track.artists.map(artist => artist.name).join(', ') }}
-              </p>
-            </div>
-            <button class="text-gray-400 hover:text-white">
-              <Icon name="heroicons:play" class="h-6 w-6" />
-            </button>
-          </div>
-        </div>
-      </section>
-
+    <div v-if="searchQuery" class="space-y-8">
       <!-- Artists -->
-      <section v-if="searchResults.artists?.items.length">
-        <h2 class="mb-4 text-2xl font-bold">Artists</h2>
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <div
-            v-for="artist in searchResults.artists.items"
-            :key="artist.id"
-            class="card group cursor-pointer text-center"
-          >
-            <img
-              :src="artist.images[0].url"
-              :alt="artist.name"
-              class="mb-4 aspect-square w-full rounded-full object-cover"
-            />
-            <h3 class="font-medium">{{ artist.name }}</h3>
+      <section>
+        <h2 class="text-2xl font-bold mb-4">Artists</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div v-for="i in 4" :key="i" class="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
+            <div class="aspect-square bg-gray-700 rounded-full mb-4"></div>
+            <h3 class="font-medium">Artist {{ i }}</h3>
             <p class="text-sm text-gray-400">Artist</p>
           </div>
         </div>
       </section>
 
-      <!-- Playlists -->
-      <section v-if="searchResults.playlists?.items.length">
-        <h2 class="mb-4 text-2xl font-bold">Playlists</h2>
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <div
-            v-for="playlist in searchResults.playlists.items"
-            :key="playlist.id"
-            class="card group cursor-pointer"
-          >
-            <img
-              :src="playlist.images[0].url"
-              :alt="playlist.name"
-              class="mb-4 aspect-square w-full rounded-lg object-cover"
-            />
-            <h3 class="font-medium">{{ playlist.name }}</h3>
-            <p class="text-sm text-gray-400">{{ playlist.description }}</p>
+      <!-- Songs -->
+      <section>
+        <h2 class="text-2xl font-bold mb-4">Songs</h2>
+        <div class="space-y-2">
+          <div v-for="i in 5" :key="i" class="flex items-center space-x-4 p-2 hover:bg-gray-800 rounded-lg cursor-pointer">
+            <div class="w-12 h-12 bg-gray-700 rounded"></div>
+            <div class="flex-1">
+              <h3 class="font-medium">Song {{ i }}</h3>
+              <p class="text-sm text-gray-400">Artist Name</p>
+            </div>
+            <button class="text-gray-400 hover:text-white">
+              <Icon name="mdi:play" class="w-6 h-6" />
+            </button>
           </div>
         </div>
       </section>
+
+      <!-- Playlists -->
+      <section>
+        <h2 class="text-2xl font-bold mb-4">Playlists</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div v-for="i in 4" :key="i" class="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
+            <div class="aspect-square bg-gray-700 rounded-md mb-4"></div>
+            <h3 class="font-medium">Playlist {{ i }}</h3>
+            <p class="text-sm text-gray-400">By User</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div v-else class="space-y-8">
+      <h2 class="text-2xl font-bold">Browse All</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div v-for="i in 12" :key="i" class="aspect-square bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer p-4">
+          <h3 class="text-xl font-bold">Category {{ i }}</h3>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useAuthStore } from '../stores/auth'
-import { usePlayerStore } from '../stores/player'
-
-const authStore = useAuthStore()
-const playerStore = usePlayerStore()
 const searchQuery = ref('')
-const searchResults = ref({
-  tracks: { items: [] },
-  artists: { items: [] },
-  playlists: { items: [] }
-})
-
-const handleSearch = async () => {
-  if (!searchQuery.value || !authStore.isAuthenticated) return
-
-  try {
-    const response = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-        searchQuery.value
-      )}&type=track,artist,playlist&limit=10`,
-      {
-        headers: {
-          'Authorization': `Bearer ${authStore.accessToken}`
-        }
-      }
-    )
-    const data = await response.json()
-    searchResults.value = data
-  } catch (error) {
-    console.error('Error searching:', error)
-  }
-}
-
-const playTrack = (track) => {
-  playerStore.setCurrentTrack(track)
-}
 </script> 

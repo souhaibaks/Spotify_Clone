@@ -1,37 +1,53 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-black">
-    <div class="w-full max-w-md space-y-8 rounded-lg bg-gray-900 p-8">
+  <div class="min-h-screen flex items-center justify-center bg-black">
+    <div class="w-full max-w-md p-8 space-y-8 bg-gray-900 rounded-lg">
       <div class="text-center">
-        <h2 class="text-3xl font-bold text-white">Welcome to Spotify Clone</h2>
-        <p class="mt-2 text-gray-400">Sign in to continue</p>
+        <h1 class="text-3xl font-bold text-white">Welcome Back</h1>
+        <p class="mt-2 text-gray-400">Log in to continue</p>
       </div>
 
       <button
-        @click="login"
-        class="group relative flex w-full justify-center rounded-md bg-[#1DB954] px-4 py-3 text-sm font-medium text-white hover:bg-[#1ed760] focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:ring-offset-2"
+        @click="handleSpotifyLogin"
+        class="w-full py-3 px-4 bg-green-500 text-white rounded-full font-medium hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
       >
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-          <Icon name="heroicons:musical-note" class="h-5 w-5" />
-        </span>
-        Sign in with Spotify
+        <Icon name="mdi:spotify" class="w-6 h-6" />
+        <span>Continue with Spotify</span>
       </button>
+
+      <div class="text-center">
+        <p class="text-gray-400">
+          Don't have an account?
+          <NuxtLink to="/signup" class="text-green-500 hover:text-green-400">
+            Sign up
+          </NuxtLink>
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
-const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:3000/callback'
+const router = useRouter()
+const authStore = useAuthStore()
 
-const login = () => {
-  const scope = 'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read user-library-modify playlist-read-private playlist-modify-private'
-  
+const handleSpotifyLogin = () => {
+  const clientId = process.env.SPOTIFY_CLIENT_ID
+  const redirectUri = process.env.SPOTIFY_REDIRECT_URI
+  const scope = 'user-read-private user-read-email user-library-read user-library-modify user-read-playback-state user-modify-playback-state user-read-recently-played user-top-read'
+
+  if (!clientId || !redirectUri) {
+    console.error('Missing Spotify credentials:', { clientId, redirectUri })
+    alert('Spotify credentials are not configured. Please check your .env file.')
+    return
+  }
+
   const authUrl = new URL('https://accounts.spotify.com/authorize')
-  authUrl.searchParams.append('client_id', SPOTIFY_CLIENT_ID)
+  authUrl.searchParams.append('client_id', clientId)
   authUrl.searchParams.append('response_type', 'code')
-  authUrl.searchParams.append('redirect_uri', REDIRECT_URI)
+  authUrl.searchParams.append('redirect_uri', redirectUri)
   authUrl.searchParams.append('scope', scope)
-  
+  authUrl.searchParams.append('show_dialog', 'true')
+
   window.location.href = authUrl.toString()
 }
 </script> 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { Howl } from 'howler'
+import { useSpotify } from '~/composables/useSpotify'
 
 interface PlayerState {
   currentTrack: any | null
@@ -7,79 +7,95 @@ interface PlayerState {
   volume: number
   progress: number
   duration: number
-  howl: Howl | null
 }
 
 export const usePlayerStore = defineStore('player', {
   state: (): PlayerState => ({
     currentTrack: null,
     isPlaying: false,
-    volume: 1,
+    volume: 50,
     progress: 0,
     duration: 0,
-    howl: null
   }),
 
   actions: {
-    setCurrentTrack(track: any) {
-      this.currentTrack = track
-      if (this.howl) {
-        this.howl.stop()
-      }
-      this.howl = new Howl({
-        src: [track.preview_url],
-        html5: true,
-        onplay: () => {
-          this.isPlaying = true
-          this.duration = this.howl?.duration() || 0
-          this.updateProgress()
-        },
-        onpause: () => {
-          this.isPlaying = false
-        },
-        onstop: () => {
-          this.isPlaying = false
-          this.progress = 0
-        },
-        onend: () => {
-          this.isPlaying = false
-          this.progress = 0
+    async play(trackUri?: string) {
+      const spotify = useSpotify()
+      try {
+        if (trackUri) {
+          await spotify.startPlayback(undefined, [trackUri])
+        } else {
+          await spotify.startPlayback()
         }
-      })
-      this.play()
-    },
-
-    play() {
-      if (this.howl) {
-        this.howl.play()
+        this.isPlaying = true
+        await this.updatePlaybackState()
+      } catch (error) {
+        console.error('Error playing track:', error)
       }
     },
 
-    pause() {
-      if (this.howl) {
-        this.howl.pause()
+    async pause() {
+      const spotify = useSpotify()
+      try {
+        await spotify.pausePlayback()
+        this.isPlaying = false
+      } catch (error) {
+        console.error('Error pausing track:', error)
       }
     },
 
-    setVolume(volume: number) {
-      this.volume = volume
-      if (this.howl) {
-        this.howl.volume(volume)
+    async next() {
+      const spotify = useSpotify()
+      try {
+        await spotify.skipToNext()
+        await this.updatePlaybackState()
+      } catch (error) {
+        console.error('Error skipping to next track:', error)
       }
     },
 
-    seek(position: number) {
-      if (this.howl) {
-        this.howl.seek(position)
-        this.progress = position
+    async previous() {
+      const spotify = useSpotify()
+      try {
+        await spotify.skipToPrevious()
+        await this.updatePlaybackState()
+      } catch (error) {
+        console.error('Error skipping to previous track:', error)
       }
     },
 
-    updateProgress() {
-      if (this.howl && this.isPlaying) {
-        this.progress = this.howl.seek() as number
-        requestAnimationFrame(() => this.updateProgress())
+    async setVolume(volume: number) {
+      const spotify = useSpotify()
+      try {
+        await spotify.setVolume(volume)
+        this.volume = volume
+      } catch (error) {
+        console.error('Error setting volume:', error)
       }
-    }
-  }
+    },
+
+    async updatePlaybackState() {
+      const spotify = useSpotify()
+      try {
+        const playback = await spotify.getCurrentPlayback()
+        if (playback) {
+          this.currentTrack = playback.item
+          this.isPlaying = playback.is_playing
+          this.progress = playback.progress_ms
+          this.duration = playback.item?.duration_ms || 0
+        }
+      } catch (error) {
+        console.error('Error updating playback state:', error)
+      }
+    },
+
+    startProgressUpdate() {
+      if (this.isPlaying) {
+        this.progress += 1000
+        if (this.progress >= this.duration) {
+          this.updatePlaybackState()
+        }
+      }
+    },
+  },
 }) 

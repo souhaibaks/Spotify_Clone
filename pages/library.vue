@@ -1,48 +1,69 @@
 <template>
-  <div class="space-y-8">
-    <section>
-      <h2 class="mb-4 text-2xl font-bold">Your Playlists</h2>
-      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        <div v-for="playlist in userPlaylists" :key="playlist.id" class="card group cursor-pointer">
-          <img :src="playlist.images[0]?.url" :alt="playlist.name" class="mb-4 aspect-square w-full rounded-lg object-cover" />
-          <h3 class="font-medium">{{ playlist.name }}</h3>
-          <p class="text-sm text-gray-400">{{ playlist.description }}</p>
-        </div>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h2 class="text-2xl font-bold">Your Library</h2>
+      <div class="flex items-center space-x-4">
+        <button class="text-gray-400 hover:text-white">
+          <Icon name="mdi:playlist-plus" class="w-6 h-6" />
+        </button>
+        <button class="text-gray-400 hover:text-white">
+          <Icon name="mdi:arrow-expand" class="w-6 h-6" />
+        </button>
       </div>
-    </section>
+    </div>
 
-    <section>
-      <h2 class="mb-4 text-2xl font-bold">Saved Tracks</h2>
-      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        <div v-for="track in savedTracks" :key="track.id" class="card group cursor-pointer">
-          <img :src="track.album.images[0]?.url" :alt="track.name" class="mb-4 aspect-square w-full rounded-lg object-cover" />
-          <h3 class="font-medium">{{ track.name }}</h3>
-          <p class="text-sm text-gray-400">{{ track.artists.map(artist => artist.name).join(', ') }}</p>
+    <!-- Tabs -->
+    <div class="flex space-x-4 border-b border-gray-800">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        @click="activeTab = tab.id"
+        :class="[
+          'px-4 py-2 text-sm font-medium',
+          activeTab === tab.id
+            ? 'text-white border-b-2 border-white'
+            : 'text-gray-400 hover:text-white'
+        ]"
+      >
+        {{ tab.name }}
+      </button>
+    </div>
+
+    <!-- Playlists -->
+    <div v-if="activeTab === 'playlists'" class="space-y-4">
+      <div v-for="i in 10" :key="i" class="flex items-center space-x-4 p-2 hover:bg-gray-800 rounded-lg cursor-pointer">
+        <div class="w-16 h-16 bg-gray-700 rounded"></div>
+        <div class="flex-1">
+          <h3 class="font-medium">Playlist {{ i }}</h3>
+          <p class="text-sm text-gray-400">Playlist • {{ i * 10 }} songs</p>
         </div>
+        <button class="text-gray-400 hover:text-white">
+          <Icon name="mdi:play" class="w-6 h-6" />
+        </button>
       </div>
-    </section>
+    </div>
+
+    <!-- Liked Songs -->
+    <div v-else-if="activeTab === 'liked'" class="space-y-4">
+      <div v-for="i in 10" :key="i" class="flex items-center space-x-4 p-2 hover:bg-gray-800 rounded-lg cursor-pointer">
+        <div class="w-16 h-16 bg-gray-700 rounded"></div>
+        <div class="flex-1">
+          <h3 class="font-medium">Liked Song {{ i }}</h3>
+          <p class="text-sm text-gray-400">Artist Name</p>
+        </div>
+        <button class="text-gray-400 hover:text-white">
+          <Icon name="mdi:play" class="w-6 h-6" />
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useSpotifyApi } from '../composables/useSpotifyApi'
+const tabs = [
+  { id: 'playlists', name: 'Playlists' },
+  { id: 'liked', name: 'Liked Songs' }
+]
 
-const userPlaylists = ref([])
-const savedTracks = ref([])
-
-const { apiFetch } = useSpotifyApi()
-
-onMounted(async () => {
-  try {
-    // Fetch user's playlists
-    const playlistsData = await apiFetch('/me/playlists')
-    userPlaylists.value = playlistsData.items
-
-    // Fetch user's saved tracks
-    const tracksData = await apiFetch('/me/tracks')
-    savedTracks.value = tracksData.items.map(item => item.track)
-  } catch (error) {
-    console.error('Error fetching library data:', error)
-  }
-})
+const activeTab = ref('playlists')
 </script> 
