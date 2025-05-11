@@ -2,72 +2,111 @@ import { defineStore } from 'pinia'
 
 interface Song {
   id: number
-  title: string
-  artist: string
-  album: string
-  cover: string
-  duration: string
+  name: string
+  path: string
+  category: string
+}
+
+interface Artist {
+  name: string
+  albumCover: string
+  releaseYear: string
+  tracks: Song[]
 }
 
 export const useSongsStore = defineStore('songs', {
   state: () => ({
-    songs: [
-      {
-        id: 1,
-        title: "Shape of You",
-        artist: "Ed Sheeran",
-        album: "÷ (Divide)",
-        cover: "https://i.scdn.co/image/ab67616d0000b273ba5db46f4b838ef6027e6f96",
-        duration: "3:53"
-      },
-      {
-        id: 2,
-        title: "Blinding Lights",
-        artist: "The Weeknd",
-        album: "After Hours",
-        cover: "https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36",
-        duration: "3:20"
-      },
-      {
-        id: 3,
-        title: "Dance Monkey",
-        artist: "Tones and I",
-        album: "The Kids Are Coming",
-        cover: "https://i.scdn.co/image/ab67616d0000b273c6f7af36bcd24c20c2d3a3e9",
-        duration: "3:29"
-      },
-      {
-        id: 4,
-        title: "Someone You Loved",
-        artist: "Lewis Capaldi",
-        album: "Divinely Uninspired to a Hellish Extent",
-        cover: "https://i.scdn.co/image/ab67616d0000b2732e8ed79e177ff6011076f5f5",
-        duration: "3:02"
-      },
-      {
-        id: 5,
-        title: "Don't Start Now",
-        artist: "Dua Lipa",
-        album: "Future Nostalgia",
-        cover: "https://i.scdn.co/image/ab67616d0000b2732a038d3bf875d23e4aeaa84e",
-        duration: "3:03"
-      }
-    ] as Song[],
+    artist: {
+      name: "The Midnight Owls",
+      albumCover: "/images/default-album.svg",
+      releaseYear: "2022",
+      tracks: [
+        {
+          id: 1,
+          name: "Neon Skies",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+          category: "Synthwave"
+        },
+        {
+          id: 2,
+          name: "City Lights",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+          category: "Pop"
+        },
+        {
+          id: 3,
+          name: "Midnight Drive",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+          category: "Chill"
+        },
+        {
+          id: 4,
+          name: "Electric Dreams",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+          category: "Synthwave"
+        },
+        {
+          id: 5,
+          name: "Starlit Avenue",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+          category: "Pop"
+        },
+        {
+          id: 6,
+          name: "Golden Hour",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+          category: "Chill"
+        },
+        {
+          id: 7,
+          name: "Echoes of You",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+          category: "Indie"
+        },
+        {
+          id: 8,
+          name: "Lost in the Night",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+          category: "Indie"
+        },
+        {
+          id: 9,
+          name: "Sunset Boulevard",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+          category: "Chill"
+        },
+        {
+          id: 10,
+          name: "Afterglow",
+          path: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+          category: "Synthwave"
+        }
+      ]
+    } as Artist,
     recentlyPlayed: [] as Song[],
     recommended: [] as Song[]
   }),
 
   actions: {
     getRecentlyPlayed() {
-      // For now, return the first 5 songs as recently played
-      this.recentlyPlayed = this.songs.slice(0, 5)
       return this.recentlyPlayed
     },
 
     getRecommended() {
-      // For now, return all songs as recommended
-      this.recommended = [...this.songs]
+      // Return all songs as recommended
+      this.recommended = [...this.artist.tracks]
       return this.recommended
+    },
+
+    addToRecentlyPlayed(song: Song) {
+      // Remove the song if it's already in the list
+      this.recentlyPlayed = this.recentlyPlayed.filter(s => s.id !== song.id)
+      // Add the song to the beginning of the list
+      this.recentlyPlayed.unshift(song)
+      // Keep only the last 5 songs
+      if (this.recentlyPlayed.length > 5) {
+        this.recentlyPlayed = this.recentlyPlayed.slice(0, 5)
+      }
     }
   }
 }) 

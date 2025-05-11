@@ -1,123 +1,73 @@
 <template>
-  <div class="min-h-screen bg-black text-white p-8">
-    <div v-if="!authStore.isAuthenticated" class="text-center">
-      <h1 class="text-4xl font-bold mb-4">Welcome to Music App</h1>
-      <p class="text-gray-400 mb-8">Log in to start listening to your favorite music</p>
-      <div class="space-x-4">
-        <NuxtLink to="/login" class="bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition-colors">
-          Log In
-        </NuxtLink>
-        <NuxtLink to="/signup" class="bg-transparent border border-white text-white px-6 py-3 rounded-full hover:bg-white hover:text-black transition-colors">
-          Sign Up
-        </NuxtLink>
+  <div class="min-h-screen bg-[#121212] text-white">
+    <div class="max-w-screen-xl mx-auto px-4 py-8">
+      <!-- Filter Bar -->
+      <div class="flex space-x-2 mb-8">
+        <button class="px-4 py-2 rounded-full bg-[#232323] text-white font-semibold focus:outline-none">All</button>
+        <button class="px-4 py-2 rounded-full bg-[#232323] text-gray-300 hover:text-white focus:outline-none">Music</button>
+        <button class="px-4 py-2 rounded-full bg-[#232323] text-gray-300 hover:text-white focus:outline-none">Podcasts</button>
       </div>
+
+      <!-- Songs Row (above Made For) -->
+      <section class="mb-10">
+        <div class="flex space-x-4 overflow-x-auto pb-2">
+          <NuxtLink v-for="song in songsStore.recommended" :key="song.id" :to="`/song/${song.id}`" class="min-w-[180px] bg-[#232323] rounded-lg p-3 hover:bg-[#282828] transition-colors flex-shrink-0 flex flex-col items-center cursor-pointer" style="text-decoration: none; color: inherit;">
+            <img :src="songsStore.artist.albumCover" alt="cover" class="w-24 h-24 object-cover rounded mb-3" />
+            <div class="font-semibold text-base mb-1 text-center w-full truncate">{{ song.name }}</div>
+            <div class="text-xs text-gray-400 text-center w-full truncate">{{ songsStore.artist.name }}</div>
+          </NuxtLink>
+        </div>
+      </section>
+
+      <!-- Made For User -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-bold mb-4">Made for {{ authStore.username || 'User' }}</h2>
+        <div class="flex space-x-6 overflow-x-auto pb-2">
+          <NuxtLink v-for="playlist in playlistsStore.playlists" :key="playlist.id" :to="`/playlist/${playlist.id}`" class="min-w-[200px] bg-[#181818] rounded-lg p-4 hover:bg-[#282828] transition-colors flex-shrink-0 cursor-pointer" style="text-decoration: none; color: inherit;">
+            <img :src="playlist.cover" alt="cover" class="w-full h-40 object-cover rounded mb-3" />
+            <div class="flex items-center mb-2">
+              <span class="bg-[#1DB954] text-black text-xs font-bold px-2 py-0.5 rounded mr-2">Daily Mix</span>
+              <span class="text-xs text-gray-400 font-bold">{{ playlist.name.slice(-2) }}</span>
+            </div>
+            <div class="font-semibold text-base mb-1">{{ playlist.name }}</div>
+            <div class="text-xs text-gray-400">{{ playlist.description }}</div>
+          </NuxtLink>
+        </div>
+      </section>
+
+      <!-- Jump back in -->
+      <section>
+        <h2 class="text-2xl font-bold mb-4">Jump back in</h2>
+        <div class="flex space-x-6 overflow-x-auto pb-2">
+          <NuxtLink v-for="n in 6" :key="n" :to="`/artist/${encodeURIComponent(songsStore.artist.name)}`" class="flex flex-col items-center cursor-pointer" style="text-decoration: none; color: inherit;">
+            <div class="w-28 h-28 rounded-full overflow-hidden mb-2 bg-[#232323]">
+              <img src="/images/musician.png" alt="Jump back in" class="w-full h-full object-cover" />
+            </div>
+            <div class="text-sm text-gray-200 font-semibold">{{ songsStore.artist.name }}</div>
+          </NuxtLink>
+        </div>
+      </section>
     </div>
 
-    <div v-else>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- Recently Played -->
-        <div class="bg-gray-900 p-6 rounded-lg">
-          <h2 class="text-2xl font-bold mb-4">Recently Played</h2>
-          <div v-if="loading" class="text-center py-4">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
-          </div>
-          <div v-else-if="recentlyPlayed.length === 0" class="text-gray-400 text-center py-4">
-            No recently played tracks
-          </div>
-          <div v-else class="space-y-4">
-            <div v-for="item in recentlyPlayed" :key="item.track.id" class="flex items-center space-x-4">
-              <img :src="item.track.album.images[0]?.url" :alt="item.track.name" class="w-16 h-16 rounded">
-              <div>
-                <h3 class="font-medium">{{ item.track.name }}</h3>
-                <p class="text-gray-400">{{ item.track.artists[0].name }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Your Playlists -->
-        <div class="bg-gray-900 p-6 rounded-lg">
-          <h2 class="text-2xl font-bold mb-4">Your Playlists</h2>
-          <div v-if="loading" class="text-center py-4">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
-          </div>
-          <div v-else-if="playlists.length === 0" class="text-gray-400 text-center py-4">
-            No playlists found
-          </div>
-          <div v-else class="space-y-4">
-            <div v-for="playlist in playlists" :key="playlist.id" class="flex items-center space-x-4">
-              <img :src="playlist.images[0]?.url" :alt="playlist.name" class="w-16 h-16 rounded">
-              <div>
-                <h3 class="font-medium">{{ playlist.name }}</h3>
-                <p class="text-gray-400">{{ playlist.tracks.total }} tracks</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recommended -->
-        <div class="bg-gray-900 p-6 rounded-lg">
-          <h2 class="text-2xl font-bold mb-4">Recommended for You</h2>
-          <div v-if="loading" class="text-center py-4">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
-          </div>
-          <div v-else-if="recommended.length === 0" class="text-gray-400 text-center py-4">
-            No recommendations available
-          </div>
-          <div v-else class="space-y-4">
-            <div v-for="track in recommended" :key="track.id" class="flex items-center space-x-4">
-              <img :src="track.album.images[0]?.url" :alt="track.name" class="w-16 h-16 rounded">
-              <div>
-                <h3 class="font-medium">{{ track.name }}</h3>
-                <p class="text-gray-400">{{ track.artists[0].name }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Player -->
+    <Player />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useSpotifyApi } from '../services/spotify'
+import { useSongsStore } from '../stores/songs'
+import SongRow from '../components/SongRow.vue'
+import Player from '../components/Player.vue'
+import { usePlaylistsStore } from '../stores/playlists'
+import { ref } from 'vue'
+import { useAuthStore } from '../stores/auth'
 
+const songsStore = useSongsStore()
+const playlistsStore = usePlaylistsStore()
 const authStore = useAuthStore()
-const spotifyApi = useSpotifyApi()
+// Simulated user (replace with real user store if available)
+const user = ref({ name: 'Broke' })
 
-const loading = ref(true)
-const recentlyPlayed = ref([])
-const playlists = ref([])
-const recommended = ref([])
-
-const loadData = async () => {
-  try {
-    loading.value = true
-    const [recentlyPlayedData, playlistsData, recommendedData] = await Promise.all([
-      spotifyApi.getRecentlyPlayed(),
-      spotifyApi.getPlaylists(),
-      spotifyApi.getRecommendations()
-    ])
-    
-    recentlyPlayed.value = recentlyPlayedData.items
-    playlists.value = playlistsData.items
-    recommended.value = recommendedData.tracks
-  } catch (error) {
-    console.error('Error loading data:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  if (authStore.isAuthenticated) {
-    loadData()
-  }
-})
-
-watch(() => authStore.isAuthenticated, (isAuthenticated) => {
-  if (isAuthenticated) {
-    loadData()
-  }
-})
+// Initialize recommended songs
+songsStore.getRecommended()
 </script> 

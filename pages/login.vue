@@ -1,53 +1,90 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-black">
-    <div class="w-full max-w-md p-8 space-y-8 bg-gray-900 rounded-lg">
-      <div class="text-center">
-        <h1 class="text-3xl font-bold text-white">Welcome Back</h1>
-        <p class="mt-2 text-gray-400">Log in to continue</p>
+  <div class="min-h-screen bg-[#191414] text-white flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold mb-2">Welcome Back</h1>
+        <p class="text-[#B3B3B3]">Log in to continue to Music App</p>
       </div>
 
-      <button
-        @click="handleSpotifyLogin"
-        class="w-full py-3 px-4 bg-green-500 text-white rounded-full font-medium hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
-      >
-        <Icon name="mdi:spotify" class="w-6 h-6" />
-        <span>Continue with Spotify</span>
-      </button>
+      <form @submit.prevent="handleLogin" class="space-y-6">
+        <div>
+          <label for="email" class="block text-sm font-medium mb-2">Email</label>
+          <input
+            id="email"
+            v-model="formData.email"
+            type="email"
+            required
+            class="w-full px-4 py-3 bg-[#282828] border border-[#404040] rounded-lg focus:outline-none focus:border-[#1DB954]"
+            placeholder="Enter your email"
+          >
+        </div>
 
-      <div class="text-center">
-        <p class="text-gray-400">
+        <div>
+          <label for="password" class="block text-sm font-medium mb-2">Password</label>
+          <input
+            id="password"
+            v-model="formData.password"
+            type="password"
+            required
+            class="w-full px-4 py-3 bg-[#282828] border border-[#404040] rounded-lg focus:outline-none focus:border-[#1DB954]"
+            placeholder="Enter your password"
+          >
+        </div>
+
+        <div v-if="error" class="text-red-500 text-sm">
+          {{ error }}
+        </div>
+
+        <button
+          type="submit"
+          class="w-full py-3 bg-[#1DB954] text-white rounded-full hover:bg-[#1ed760] transition-colors"
+          :disabled="isLoading"
+        >
+          {{ isLoading ? 'Logging in...' : 'Log In' }}
+        </button>
+
+        <p class="text-center text-[#B3B3B3]">
           Don't have an account?
-          <NuxtLink to="/signup" class="text-green-500 hover:text-green-400">
+          <NuxtLink to="/signup" class="text-[#1DB954] hover:underline">
             Sign up
           </NuxtLink>
         </p>
-      </div>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+
 const router = useRouter()
 const authStore = useAuthStore()
 
-const handleSpotifyLogin = () => {
-  const clientId = process.env.SPOTIFY_CLIENT_ID
-  const redirectUri = process.env.SPOTIFY_REDIRECT_URI
-  const scope = 'user-read-private user-read-email user-library-read user-library-modify user-read-playback-state user-modify-playback-state user-read-recently-played user-top-read'
+interface FormData {
+  email: string
+  password: string
+}
 
-  if (!clientId || !redirectUri) {
-    console.error('Missing Spotify credentials:', { clientId, redirectUri })
-    alert('Spotify credentials are not configured. Please check your .env file.')
-    return
+const formData = ref<FormData>({
+  email: '',
+  password: ''
+})
+
+const error = ref('')
+const isLoading = ref(false)
+
+const handleLogin = async () => {
+  try {
+    error.value = ''
+    isLoading.value = true
+    await authStore.login(formData.value.email, formData.value.password)
+    router.push('/')
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'An error occurred during login'
+  } finally {
+    isLoading.value = false
   }
-
-  const authUrl = new URL('https://accounts.spotify.com/authorize')
-  authUrl.searchParams.append('client_id', clientId)
-  authUrl.searchParams.append('response_type', 'code')
-  authUrl.searchParams.append('redirect_uri', redirectUri)
-  authUrl.searchParams.append('scope', scope)
-  authUrl.searchParams.append('show_dialog', 'true')
-
-  window.location.href = authUrl.toString()
 }
 </script> 

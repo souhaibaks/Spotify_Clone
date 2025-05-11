@@ -1,85 +1,62 @@
 import { defineStore } from 'pinia'
+import { 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  type User
+} from 'firebase/auth'
 
 interface AuthState {
   isAuthenticated: boolean
-  user: {
-    email: string | null
-  } | null
-  accessToken: string | null
-  refreshToken: string | null
-  expiresIn: number | null
-  tokenTimestamp: number | null
+  currentUser: User | null
+  username: string | null
 }
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     isAuthenticated: false,
-    user: null,
-    accessToken: null,
-    refreshToken: null,
-    expiresIn: null,
-    tokenTimestamp: null
+    currentUser: null,
+    username: null
   }),
 
   actions: {
-    async login(email: string, password: string) {
+    async signup(email: string, password: string, username: string) {
+      const { $auth } = useNuxtApp()
       try {
-        // Here you would typically make an API call to authenticate the user
-        // For now, we'll just set the authentication state
+        const userCredential = await createUserWithEmailAndPassword($auth, email, password)
+        this.currentUser = userCredential.user
         this.isAuthenticated = true
-        this.user = { email }
-        console.log('User logged in:', email)
-      } catch (error) {
-        console.error('Error logging in:', error)
-        throw error
-      }
-    },
-
-    logout() {
-      this.isAuthenticated = false
-      this.user = null
-      this.accessToken = null
-      this.refreshToken = null
-      this.expiresIn = null
-      this.tokenTimestamp = null
-      console.log('User logged out')
-    },
-
-    setTokens(accessToken: string, refreshToken: string, expiresIn: number) {
-      this.accessToken = accessToken
-      this.refreshToken = refreshToken
-      this.expiresIn = expiresIn
-      this.tokenTimestamp = Date.now()
-      this.isAuthenticated = true
-      console.log('Tokens set successfully')
-    },
-
-    async refreshAccessToken() {
-      if (!this.refreshToken) {
-        console.error('No refresh token available')
-        return
-      }
-
-      try {
-        const response = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ refresh_token: this.refreshToken }),
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to refresh token')
+        this.username = username
+      } catch (error: any) {
+        if (error.code === 'auth/email-already-in-use') {
+          throw new Error('Email is already registered')
         }
+        throw new Error(error.message)
+      }
+    },
 
-        const data = await response.json()
-        this.setTokens(data.access_token, data.refresh_token, data.expires_in)
-        return data
-      } catch (error) {
-        console.error('Error refreshing token:', error)
-        this.logout()
-        throw error
+    async login(email: string, password: string) {
+      const { $auth } = useNuxtApp()
+      try {
+        const userCredential = await signInWithEmailAndPassword($auth, email, password)
+        this.currentUser = userCredential.user
+        this.isAuthenticated = true
+      } catch (error: any) {
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          throw new Error('Invalid email or password')
+        }
+        throw new Error(error.message)
+      }
+    },
+
+    async logout() {
+      const { $auth } = useNuxtApp()
+      try {
+        await signOut($auth)
+        this.currentUser = null
+      this.isAuthenticated = false
+      } catch (error: any) {
+        throw new Error(error.message)
       }
     }
   }
