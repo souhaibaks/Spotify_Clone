@@ -26,7 +26,7 @@
       <div class="flex-1 overflow-y-auto bg-gradient-to-b from-gray-900 to-black">
         <!-- Header Bar -->
         <div class="flex items-center justify-end px-8 py-4 bg-black bg-opacity-80 sticky top-0 z-20">
-          <div class="relative">
+          <div v-if="authStore.isAuthenticated" class="relative">
             <button id="profile-button" @click="showDropdown = !showDropdown" class="w-10 h-10 rounded-full bg-green-400 flex items-center justify-center text-black font-bold text-lg focus:outline-none">
               {{ (authStore.username ? authStore.username.charAt(0).toUpperCase() : 'U') }}
             </button>
@@ -49,6 +49,10 @@
               </div>
             </transition>
           </div>
+          <div v-else class="flex items-center space-x-4">
+            <NuxtLink to="/signup" class="px-6 py-2 rounded-full bg-white text-black font-bold text-lg hover:bg-gray-200 transition">Sign up</NuxtLink>
+            <NuxtLink to="/login" class="px-6 py-2 rounded-full bg-black text-white font-bold text-lg border border-white hover:bg-white hover:text-black transition">Log in</NuxtLink>
+          </div>
         </div>
         <div class="p-8">
           <NuxtPage />
@@ -62,15 +66,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watchEffect } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+
 const showDropdown = ref(false)
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
-// Simulated user (replace with real user store if available)
-const user = ref({ name: 'Broke' })
+watchEffect(() => {
+  if (!authStore.isAuthenticated && route.path !== '/login' && route.path !== '/signup') {
+    router.push('/login')
+  }
+})
 
 function logout() {
   // Clear user session logic here

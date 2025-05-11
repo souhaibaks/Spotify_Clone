@@ -25,7 +25,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const userCredential = await createUserWithEmailAndPassword($auth, email, password)
         this.currentUser = userCredential.user
-        this.isAuthenticated = true
+      this.isAuthenticated = true
         this.username = username
       } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {

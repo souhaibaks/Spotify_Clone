@@ -67,7 +67,4 @@ const playlistsStore = usePlaylistsStore()
 const authStore = useAuthStore()
 // Simulated user (replace with real user store if available)
 const user = ref({ name: 'Broke' })
-
-// Initialize recommended songs
-songsStore.getRecommended()
 </script> 
